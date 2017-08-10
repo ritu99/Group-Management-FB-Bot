@@ -1,7 +1,6 @@
 var fb = require("facebook-chat-api");
 var db = require("mongodb");
 
-var my_id = 1;
 
 fb({email: "EMAIL", password: "PASSWORD"}, (err, api) => {
   api.listen((err, event) => {
