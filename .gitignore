@@ -59,3 +59,6 @@ typings/
 
 # passwords
 password.json
+
+#db access
+db.js
