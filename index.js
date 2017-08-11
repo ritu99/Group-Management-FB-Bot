@@ -4,8 +4,17 @@ var MongoClient = require("mongodb").MongoClient;
 var Promise = require("promise");
 var url = "mongodb://localhost:27017/gmbot";
 
-var db;
+var commands = [
+  "make [groupname] [tag people in group]",
+  "delete [groupname]",
+  "add [groupname] [tag people to add]",
+  "remove [groupname] [tag people to remove]",
+  "rename [groupname] [new groupname]",
+  "list [groupname]",
+  "listall"
+];
 
+var db;
 MongoClient.connect(url, (err, d) => {
     if(err) throw err;
     db = d;
@@ -160,15 +169,13 @@ function renameGroup(words, message){
 
 function help(info, message){
   console.log("help" + " " + info);
-  fbapi.sendMessage(info + "\n\nTo use gmbot simply type /gmbot or @gmbot followed by one of the following commands:"
-                    + "\n - make [groupname] [tag people in group]"
-                    + "\n - delete [groupname]"
-                    + "\n - add [groupname] [tag people to add to group]"
-                    + "\n - remove [groupname] [tag people to remove from group]"
-                    + "\n - rename [groupname] [new groupname]"
-                    + "\n - list [groupname]"
-                    + "\n\nGroup names must not contain any spaces"
-                    + "\n\nTag a group by using @[groupname]", message.threadID);
+  if (!info) info = "\n\nTo use gmbot type /gmbot or @gmbot followed by one of the following commands:";
+  var response = info;
+  for (var command of commands)
+    response += `\n - ${command}`;
+  response += "\n\nGroup names must not contain any spaces";
+  response += "\n\nTag a group by using @[groupname]";
+  fbapi.sendMessage(response, message.threadID);
 }
 
 function list(words, message){
