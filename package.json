@@ -17,8 +17,10 @@
   },
   "homepage": "https://github.com/ritu99/Group-Management-FB-Bot#readme",
   "dependencies": {
-    "facebook-chat-api": "^1.4.0",
+    "facebook-chat-api": "github:Schmavery/facebook-chat-api",
     "fs": "0.0.1-security",
-    "mongodb": "^2.2.31"
+    "mongodb": "^2.2.31",
+    "promise": "^8.0.1",
+    "qs": "^6.5.0"
   }
 }
