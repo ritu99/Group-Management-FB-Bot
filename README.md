@@ -8,16 +8,17 @@ gmbot is built in node.js and relies on an [unofficial FB chat api](https://gith
 * Count how many messages have been sent in the chat
 
 ## Commands
-To use a command, type @gmbot or /gmbot followed by one of the following commands
-Command | Usage
---- | ---
-make [groupname] [tag people in group] | Create a new tagging group out of tagged people
-delete [groupname] | Delete a tagging group
-add [groupname] [tag people to add] | Add people to a tagging group
-remove [groupname] [tag people to remove] | Remove people from a tagging group
-rename [groupname] [new groupname] | Rename a tagging group
-list [groupname] | List all of the people in a tagging group
-listall | List the names of every tagging group
-count | Displays how many messages have been sent in the chat
-help | View help page containing every command
-...@[groupname]... | @Mention a tagging group to ping all of its members
+To use a command, type @gmbot or /gmbot followed by one of the following commands:
+
+| Command | Usage |
+| --- | --- |
+| make [groupname] [tag people in group] | Create a new tagging group out of tagged people |
+| delete [groupname] | Delete a tagging group |
+| add [groupname] [tag people to add] | Add people to a tagging group |
+| remove [groupname] [tag people to remove] | Remove people from a tagging group |
+| rename [groupname] [new groupname] | Rename a tagging group |
+| list [groupname] | List all of the people in a tagging group |
+| listall | List the names of every tagging group |
+| count | Displays how many messages have been sent in the chat |
+| help | View help page containing every command |
+| ...@[groupname]... | @Mention a tagging group to ping all of its members |
