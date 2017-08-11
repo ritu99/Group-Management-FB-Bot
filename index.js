@@ -21,11 +21,26 @@ function login(username, password){
     fbapi = api;
     api.listen((err, event) => {
       if(event.type === "message"){
-        console.log(event.mentions);
         var body = event.body.trim();
         var words = body.split(/\s+/g);
         if(words[0] === '/gmbot' || words[0] === '@gmbot'){
           parseCommand(words, event);
+        }else{
+          db.collection("groups").find({threadID: event.threadID}).toArray((err, result) => {
+            var people = [];
+            for (var group of result)
+            {
+              var name = "@" + group['groupName'];
+              if (~body.indexOf(name))
+              {
+                for (var person of group['people'])
+                  if (!~people.indexOf(person))
+                    people.push({tag: "Boop!", id: person});
+              }
+            }
+            if(people.length != 0)
+              fbapi.sendMessage({body: "Boop!", mentions: people}, event.threadID);
+          });
         }
       }
     });
@@ -54,6 +69,9 @@ function parseCommand(words, message){
     case "help":
       help("", message);
       break;
+    case "list":
+      list(words, message);
+      break;
     default:
       help("Invalid Command " + words[1] +" - try one of these: ", message);
       break;
@@ -62,7 +80,7 @@ function parseCommand(words, message){
 
 function makeGroup(words, message){
   console.log(message);
-  if(message.mentions.length < 2){
+  if(message.mentions.length < 1){
     return fbapi.sendMessage("You need to tag two or more people in order to make a group", message.threadID);
   }
 
@@ -74,35 +92,66 @@ function makeGroup(words, message){
         fbapi.sendMessage("Group " + words[2] + " created successfully", message.threadID);
       });
     else
-      fbapi.sendMessage("You need to tag two or more people in order to make a group", message.threadID);
+      fbapi.sendMessage("You need to tag at least one person in order to make a group", message.threadID);
   });
 
   console.log("make");
 }
 
 function deleteGroup(words, message){
-  db.collection("groups").findOne({threadID: message.threadID, groupName: words[2]}, (err, result) => {
+  db.collection("groups").deleteOne({threadID: message.threadID, groupName: words[2]}, (err, result) => {
     if(err) throw err;
-    if(!result)
-      db.collection("groups").insert({threadID: message.threadID, groupName: words[2], people: message.mentions}, (err, result) => {
-        if(err) throw err;
-        fbapi.sendMessage("Group " + words[2] + " created successfully", message.threadID);
-      });
-    else
-      fbapi.sendMessage("You need to tag two or more people in order to make a group", message.threadID);
+    fbapi.sendMessage("Group " + words[2] + " deleted", message.threadID);
   });
   console.log("delete");
 }
 
 function addToGroup(words, message){
+  db.collection("groups").findOne({threadID: message.threadID, groupName: words[2]}, (err, result) => {
+    if(err) throw err;
+    if(result){
+      var people = [...result['people'], message.mentions]
+      people = people.filter((item, pos) => people.indexOf(item) == pos);
+      db.collection("groups").updateOne({threadID: message.threadID, groupName: words[2]}, {$set: {people: people}}, (err, result) => {
+        if(err) throw err;
+        fbapi.sendMessage("Group " + words[2] + " updated", message.threadID);
+      });
+    }
+    else
+      fbapi.sendMessage("Group " + words[2] + " does not exist", message.threadID);
+  });
   console.log("add");
 }
 
 function removeFromGroup(words, message){
+  db.collection("groups").findOne({threadID: message.threadID, groupName: words[2]}, (err, result) => {
+    if(err) throw err;
+    if(result){
+      var people = result['people'];
+      people = people.filter((item, pos) => message.mentions.indexOf(item) == -1);
+      db.collection("groups").updateOne({threadID: message.threadID, groupName: words[2]}, {$set: {people: people}}, (err, result) => {
+        if(err) throw err;
+        fbapi.sendMessage("Group " + words[2] + " updated", message.threadID);
+      });
+    }
+    else
+      fbapi.sendMessage("Group " + words[2] + " does not exist", message.threadID);
+  });
   console.log("remove");
 }
 
 function renameGroup(words, message){
+  db.collection("groups").findOne({threadID: message.threadID, groupName: words[2]}, (err, result) => {
+    if(err) throw err;
+    if(result){
+      db.collection("groups").updateOne({threadID: message.threadID, groupName: words[2]}, {$set: {groupName: words[3]}}, (err, result) => {
+        if(err) throw err;
+        fbapi.sendMessage("Group " + words[2] + " renamed to " + words[3], message.threadID);
+      });
+    }
+    else
+      fbapi.sendMessage("Group " + words[2] + " does not exist", message.threadID);
+  });
   console.log("rename");
 }
 
@@ -114,15 +163,32 @@ function help(info, message){
                     + "\n - add [groupname] [tag people to add to group]"
                     + "\n - remove [groupname] [tag people to remove from group]"
                     + "\n - rename [groupname] [new groupname]"
-                    + "\n\nGroup names must not contain any spaces", message.threadID)
+                    + "\n - list [groupname]"
+                    + "\n\nGroup names must not contain any spaces"
+                    + "\n\nTag a group by using @[groupname]", message.threadID);
+}
+
+function list(words, message){
+  db.collection("groups").findOne({threadID: message.threadID, groupName: words[2]}, (err, result) => {
+    fbapi.getUserInfo(result['people'], (err, dict) => {
+      if(err) throw err;
+      var names = "";
+      console.log(dict);
+      console.log(result['people']);
+      for (var person of result['people']) names += dict[person].name + "\n";
+      fbapi.sendMessage("@" + words[2] + " members:\n" + names, message.threadID);
+    });
+  });
 }
 
 process.stdin.resume();//so the program will not close instantly
 
 function exitHandler(options, err) {
+    if(err) console.log(err);
     if (fbapi) fbapi.logout((err) => {
       if(err) console.log(err);
       else console.log("logged out");
+      db.close();
       process.exit();
     });
 }
