@@ -49,7 +49,7 @@ function login(username, password){
 
 
 function parseCommand(words, message){
-  if (!words[1]) return help("Invalid Command - try one of these: ", message);
+  if (!words[1]) return help("", message);
   switch (words[1].toLowerCase()){
     case "make":
       makeGroup(words, message);
@@ -71,6 +71,9 @@ function parseCommand(words, message){
       break;
     case "list":
       list(words, message);
+      break;
+    case "listall":
+      listAll(message);
       break;
     default:
       help("Invalid Command " + words[1] +" - try one of these: ", message);
@@ -180,6 +183,23 @@ function list(words, message){
       for (var person of result['people']) names += dict[person].name + "\n";
       fbapi.sendMessage("@" + words[2] + " members:\n" + names, message.threadID);
     });
+  });
+}
+
+function listAll(message){
+  db.collection("groups").find({threadID: message.threadID}).toArray((err, result) => {
+    if(err) throw err;
+    var response = "";
+    console.log(result);
+    if(result.length == 0) response = "No groups for this conversation";
+    else {
+      response = "All groups:\n";
+      for (var group of result){
+        var count = group['people'].length;
+        response += `@${group['groupName']} (${count} ${count-1 ? 'people' : 'person'})\n`;
+      }
+    }
+    fbapi.sendMessage(response, message.threadID);
   });
 }
 
