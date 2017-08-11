@@ -11,7 +11,8 @@ var commands = [
   "remove [groupname] [tag people to remove]",
   "rename [groupname] [new groupname]",
   "list [groupname]",
-  "listall"
+  "listall",
+  "count"
 ];
 
 var db;
@@ -83,6 +84,9 @@ function parseCommand(words, message){
       break;
     case "listall":
       listAll(message);
+      break;
+    case "count":
+      count(message);
       break;
     default:
       help("Invalid Command " + words[1] +" - try one of these: ", message);
@@ -207,6 +211,15 @@ function listAll(message){
       }
     }
     fbapi.sendMessage(response, message.threadID);
+  });
+}
+
+function count(message)
+{
+  fbapi.getThreadInfo(message.threadID, (err, info) => {
+    if(err) throw err;
+    var num = info.messageCount;
+    fbapi.sendMessage(`This chat has ${num} message${num-1 ? 's' : ''} (now ${num+1}!)`, message.threadID);
   });
 }
 
