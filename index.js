@@ -35,11 +35,11 @@ function login(username, password){
               {
                 for (var person of group['people'])
                   if (!~people.indexOf(person))
-                    people.push({tag: "Boop!", id: person});
+                    people.push({tag: "Boop!", id: person, fromIndex: people.length * 6});
               }
             }
             if(people.length != 0)
-              fbapi.sendMessage({body: "Boop!", mentions: people}, event.threadID);
+              fbapi.sendMessage({body: "Boop! ".repeat(people.length), mentions: people}, event.threadID);
           });
         }
       }
@@ -92,7 +92,7 @@ function makeGroup(words, message){
         fbapi.sendMessage("Group " + words[2] + " created successfully", message.threadID);
       });
     else
-      fbapi.sendMessage("You need to tag at least one person in order to make a group", message.threadID);
+      fbapi.sendMessage("That group already exists!", message.threadID);
   });
 
   console.log("make");
@@ -170,6 +170,8 @@ function help(info, message){
 
 function list(words, message){
   db.collection("groups").findOne({threadID: message.threadID, groupName: words[2]}, (err, result) => {
+    if(err) throw err;
+    if(!result) return;
     fbapi.getUserInfo(result['people'], (err, dict) => {
       if(err) throw err;
       var names = "";
