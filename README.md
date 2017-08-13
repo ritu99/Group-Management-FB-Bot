@@ -20,6 +20,7 @@ To use a command, type @gmbot or /gmbot followed by one of the following command
 | list [groupname] | List all of the people in a tagging group |
 | listall | List the names of every tagging group |
 | count | Displays how many messages have been sent in the chat |
+| hello | Displays a greeting message to the sender |
 | help | View help page containing every command |
 | ...@[groupname]... | @Mention a tagging group to ping all of its members |
 

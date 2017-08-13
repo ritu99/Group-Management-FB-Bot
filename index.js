@@ -12,7 +12,8 @@ var commands = [
   "rename [groupname] [new groupname]",
   "list [groupname]",
   "listall",
-  "count"
+  "count",
+  "hello"
 ];
 
 var db;
@@ -33,9 +34,6 @@ function login(username, password){
       if(event.type === "message"){
         var body = event.body.trim();
         var words = body.split(/\s+/g);
-        // if(event.senderID == '100008605450624'){
-        //   fbapi.sendMessage({body: "Aditya is dumb!"}, event.threadID);
-        // }
         if(words[0] === '/gmbot' || words[0] === '@gmbot'){
           parseCommand(words, event);
         }else{
@@ -45,7 +43,7 @@ function login(username, password){
             {
               var name = "@" + group['groupName'];
               var regex = new RegExp(name + "(\\W|$)");
-              if (regex.test(body))//(~body.indexOf(name))
+              if (regex.test(body))
               {
                 for (var person of group['people'])
                   if (!~people.indexOf(person))
@@ -91,6 +89,9 @@ function parseCommand(words, message){
       break;
     case "count":
       count(message);
+      break;
+    case "hello":
+      hello(message);
       break;
     default:
       invalidCommand(words[1], message);
@@ -235,12 +236,33 @@ function listAll(message){
   });
 }
 
-function count(message)
-{
+function count(message){
   fbapi.getThreadInfo(message.threadID, (err, info) => {
     if(err) throw err;
     var num = info.messageCount;
     fbapi.sendMessage(`This chat has ${num} message${num-1 ? 's' : ''} (now ${num+1}!)`, message.threadID);
+  });
+}
+
+function hello(message){
+  var helloPhrases = [
+    "Hi!",
+    "Hello, {{name}}!",
+    "( ^_^)／",
+    "(｡◕‿◕｡)'ﾉ''"
+  ];
+
+  fbapi.getUserInfo(message.senderID, (err, result) => {
+    if(err) throw err;
+    var name = result[message.senderID].firstName;
+    if (name == "Aditya")
+    {
+      fbapi.sendMessage("aditya u r dumb"); // some casual trolling of a friend
+      return;
+    }
+    var index = Math.floor(Math.random() * helloPhrases.length);
+    var phrase = helloPhrases[index].replace(/{{name}}/g, name);
+    fbapi.sendMessage(phrase, message.threadID);
   });
 }
 
