@@ -1,7 +1,6 @@
 var fb = require("facebook-chat-api");
 var mongo = require("mongodb");
 var MongoClient = require("mongodb").MongoClient;
-var Promise = require("promise");
 var url = "mongodb://localhost:27017/gmbot";
 
 var commands = [
@@ -14,6 +13,13 @@ var commands = [
   "listall",
   "count",
   "hello"
+];
+
+var helloPhrases = [
+  "Hi!",
+  "Hello, {{name}}!",
+  "( ^_^)／",
+  "(｡◕‿◕｡)'ﾉ''"
 ];
 
 var db;
@@ -31,34 +37,18 @@ function login(username, password){
   fb({email: username, password: password}, (err, api) => {
     fbapi = api;
     api.listen((err, event) => {
+      if(err) throw err;
       if(event.type === "message"){
         var body = event.body.trim();
         var words = body.split(/\s+/g);
-        if(words[0] === '/gmbot' || words[0] === '@gmbot'){
+        if(words[0] === '/gmbot' || words[0] === '@gmbot')
           parseCommand(words, event);
-        }else{
-          db.collection("groups").find({threadID: event.threadID}).toArray((err, result) => {
-            var people = [];
-            for (var group of result)
-            {
-              var name = "@" + group['groupName'];
-              var regex = new RegExp(name + "(\\W|$)");
-              if (regex.test(body))
-              {
-                for (var person of group['people'])
-                  if (!~people.indexOf(person))
-                    people.push({tag: "Boop!", id: person, fromIndex: people.length * 6});
-              }
-            }
-            if(people.length != 0)
-              fbapi.sendMessage({body: "Boop! ".repeat(people.length), mentions: people}, event.threadID);
-          });
-        }
+        else
+          parseTags(event);
       }
     });
   });
 }
-
 
 function parseCommand(words, message){
   if (!words[1]) return invalidCommand(null, message);
@@ -99,6 +89,30 @@ function parseCommand(words, message){
   }
 }
 
+function parseTags(message){
+  db.collection("groups").find({threadID: message.threadID}).toArray((err, result) => {
+    if(err) throw err;
+    var people = [];
+    var ids = [];
+    for (var group of result)
+    {
+      var name = "@" + group['groupName'];
+      var regex = new RegExp(name + "(\\W|$)");
+      if (regex.test(message.body))
+      {
+        for (var person of group['people']){
+          if (!~ids.indexOf(person)){
+            ids.push(person);
+            people.push({tag: "Boop!", id: person, fromIndex: people.length * 6});
+          }
+        }
+      }
+    }
+    if(people.length != 0)
+      fbapi.sendMessage({body: "Boop! ".repeat(people.length), mentions: people}, message.threadID);
+  });
+}
+
 function invalidCommand(command, message){
   var response = "";
   if (command) response = `Invalid Command ${command}\n`;
@@ -107,14 +121,12 @@ function invalidCommand(command, message){
 }
 
 function makeGroup(words, message){
-  console.log(message);
-  if(words.indexOf("@me") != -1){
+  if (words.indexOf("@me") != -1){
     message.mentions = [...message.mentions, message.senderID];
     message.mentions = message.mentions.filter((item, pos) => message.mentions.indexOf(item) == pos);
   }
-  if(message.mentions.length < 1){
+  if (message.mentions.length < 1)
     return fbapi.sendMessage("You need to tag at least one person in order to make a group", message.threadID);
-  }
 
   db.collection("groups").findOne({threadID: message.threadID, groupName: words[2]}, (err, result) => {
     if(err) throw err;
@@ -126,8 +138,6 @@ function makeGroup(words, message){
     else
       fbapi.sendMessage("That group already exists!", message.threadID);
   });
-
-  console.log("make");
 }
 
 function deleteGroup(words, message){
@@ -135,7 +145,6 @@ function deleteGroup(words, message){
     if(err) throw err;
     fbapi.sendMessage("Group " + words[2] + " deleted", message.threadID);
   });
-  console.log("delete");
 }
 
 function addToGroup(words, message){
@@ -156,7 +165,6 @@ function addToGroup(words, message){
     else
       fbapi.sendMessage("Group " + words[2] + " does not exist", message.threadID);
   });
-  console.log("add");
 }
 
 function removeFromGroup(words, message){
@@ -177,7 +185,6 @@ function removeFromGroup(words, message){
     else
       fbapi.sendMessage("Group " + words[2] + " does not exist", message.threadID);
   });
-  console.log("remove");
 }
 
 function renameGroup(words, message){
@@ -192,7 +199,6 @@ function renameGroup(words, message){
     else
       fbapi.sendMessage("Group " + words[2] + " does not exist", message.threadID);
   });
-  console.log("rename");
 }
 
 function help(message){
@@ -211,8 +217,6 @@ function list(words, message){
     fbapi.getUserInfo(result['people'], (err, dict) => {
       if(err) throw err;
       var names = "";
-      console.log(dict);
-      console.log(result['people']);
       for (var person of result['people']) names += dict[person].name + "\n";
       fbapi.sendMessage("@" + words[2] + " members:\n" + names, message.threadID);
     });
@@ -223,7 +227,6 @@ function listAll(message){
   db.collection("groups").find({threadID: message.threadID}).toArray((err, result) => {
     if(err) throw err;
     var response = "";
-    console.log(result);
     if(result.length == 0) response = "No groups for this conversation";
     else {
       response = "All groups:\n";
@@ -245,21 +248,15 @@ function count(message){
 }
 
 function hello(message){
-  var helloPhrases = [
-    "Hi!",
-    "Hello, {{name}}!",
-    "( ^_^)／",
-    "(｡◕‿◕｡)'ﾉ''"
-  ];
+  if (message.senderID == '100008605450624')
+  {
+    fbapi.sendMessage("aditya u r dumb"); // some casual trolling of a friend
+    return;
+  }
 
   fbapi.getUserInfo(message.senderID, (err, result) => {
     if(err) throw err;
     var name = result[message.senderID].firstName;
-    if (name == "Aditya")
-    {
-      fbapi.sendMessage("aditya u r dumb"); // some casual trolling of a friend
-      return;
-    }
     var index = Math.floor(Math.random() * helloPhrases.length);
     var phrase = helloPhrases[index].replace(/{{name}}/g, name);
     fbapi.sendMessage(phrase, message.threadID);
