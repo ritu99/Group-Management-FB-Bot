@@ -59,7 +59,7 @@ function login(username, password){
 
 
 function parseCommand(words, message){
-  if (!words[1]) return help("", message);
+  if (!words[1]) return invalidCommand(null, message);
   switch (words[1].toLowerCase()){
     case "make":
       makeGroup(words, message);
@@ -77,7 +77,7 @@ function parseCommand(words, message){
       renameGroup(words, message);
       break;
     case "help":
-      help("", message);
+      help(message);
       break;
     case "list":
       list(words, message);
@@ -89,9 +89,16 @@ function parseCommand(words, message){
       count(message);
       break;
     default:
-      help("Invalid Command " + words[1] +" - try one of these: ", message);
+      invalidCommand(words[1], message);
       break;
   }
+}
+
+function invalidCommand(command, message){
+  var response = "";
+  if (command) response = `Invalid Command ${command}\n`;
+  response += "Try @gmbot help for a list of commands";
+  fbapi.sendMessage(response, message.threadID);
 }
 
 function makeGroup(words, message){
@@ -171,10 +178,8 @@ function renameGroup(words, message){
   console.log("rename");
 }
 
-function help(info, message){
-  console.log("help" + " " + info);
-  if (!info) info = "\n\nTo use gmbot type /gmbot or @gmbot followed by one of the following commands:";
-  var response = info;
+function help(message){
+  var response = "To use gmbot type /gmbot or @gmbot followed by one of the following commands:";
   for (var command of commands)
     response += `\n - ${command}`;
   response += "\n\nGroup names must not contain any spaces";
