@@ -44,7 +44,8 @@ function login(username, password){
             for (var group of result)
             {
               var name = "@" + group['groupName'];
-              if (~body.indexOf(name))
+              var regex = new RegExp(name + "(\\W|$)");
+              if (regex.test(body))//(~body.indexOf(name))
               {
                 for (var person of group['people'])
                   if (!~people.indexOf(person))
