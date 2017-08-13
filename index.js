@@ -33,6 +33,9 @@ function login(username, password){
       if(event.type === "message"){
         var body = event.body.trim();
         var words = body.split(/\s+/g);
+        // if(event.senderID == '100008605450624'){
+        //   fbapi.sendMessage({body: "Aditya is dumb!"}, event.threadID);
+        // }
         if(words[0] === '/gmbot' || words[0] === '@gmbot'){
           parseCommand(words, event);
         }else{
@@ -103,8 +106,12 @@ function invalidCommand(command, message){
 
 function makeGroup(words, message){
   console.log(message);
+  if(words.indexOf("@me") != -1){
+    message.mentions = [...message.mentions, message.senderID];
+    message.mentions = message.mentions.filter((item, pos) => message.mentions.indexOf(item) == pos);
+  }
   if(message.mentions.length < 1){
-    return fbapi.sendMessage("You need to tag two or more people in order to make a group", message.threadID);
+    return fbapi.sendMessage("You need to tag at least one person in order to make a group", message.threadID);
   }
 
   db.collection("groups").findOne({threadID: message.threadID, groupName: words[2]}, (err, result) => {
@@ -130,10 +137,14 @@ function deleteGroup(words, message){
 }
 
 function addToGroup(words, message){
+  if(words.indexOf("@me") != -1){
+    message.mentions = [...message.mentions, message.senderID];
+    message.mentions = message.mentions.filter((item, pos) => message.mentions.indexOf(item) == pos);
+  }
   db.collection("groups").findOne({threadID: message.threadID, groupName: words[2]}, (err, result) => {
     if(err) throw err;
     if(result){
-      var people = [...result['people'], message.mentions]
+      var people = [...result['people'], ...message.mentions]
       people = people.filter((item, pos) => people.indexOf(item) == pos);
       db.collection("groups").updateOne({threadID: message.threadID, groupName: words[2]}, {$set: {people: people}}, (err, result) => {
         if(err) throw err;
@@ -147,6 +158,10 @@ function addToGroup(words, message){
 }
 
 function removeFromGroup(words, message){
+  if(words.indexOf("@me") != -1){
+    message.mentions = [...message.mentions, message.senderID];
+    message.mentions = message.mentions.filter((item, pos) => message.mentions.indexOf(item) == pos);
+  }
   db.collection("groups").findOne({threadID: message.threadID, groupName: words[2]}, (err, result) => {
     if(err) throw err;
     if(result){

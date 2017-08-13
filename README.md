@@ -22,3 +22,5 @@ To use a command, type @gmbot or /gmbot followed by one of the following command
 | count | Displays how many messages have been sent in the chat |
 | help | View help page containing every command |
 | ...@[groupname]... | @Mention a tagging group to ping all of its members |
+
+To tag yourself simply use @me
