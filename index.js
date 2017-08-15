@@ -269,7 +269,7 @@ function count(message){
 function hello(message){
   if (message.senderID == '100008605450624')
   {
-    fbapi.sendMessage("aditya u r dumb"); // some casual trolling of a friend
+    fbapi.sendMessage("aditya u r dumb", message.threadID); // some casual trolling of a friend
     return;
   }
 
