@@ -121,7 +121,11 @@ function invalidCommand(command, message){
 }
 
 function makeGroup(words, message){
-  if (words.indexOf("@me") != -1){
+  if (words[2] == "gmbot"){
+    fbapi.sendMessage("hey, that's me!!", message.threadID);
+    return;
+  }
+  if (~words.indexOf("@me")){
     message.mentions = [...message.mentions, message.senderID];
     message.mentions = message.mentions.filter((item, pos) => message.mentions.indexOf(item) == pos);
   }
