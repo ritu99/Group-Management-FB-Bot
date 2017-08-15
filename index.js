@@ -92,24 +92,35 @@ function parseCommand(words, message){
 function parseTags(message){
   db.collection("groups").find({threadID: message.threadID}).toArray((err, result) => {
     if(err) throw err;
-    var people = [];
-    var ids = [];
-    for (var group of result)
-    {
-      var name = "@" + group['groupName'];
-      var regex = new RegExp(name + "(\\W|$)");
-      if (regex.test(message.body))
+    if (/@all(\W|$)/.test(message.body)){
+      fbapi.getThreadInfo(message.threadID, (err, result) => {
+        if(err) throw err;
+        var people = [];
+        for (var id of result['participantIDs'])
+          people.push({tag: "Boop!", id: id, fromIndex: people.length * 6});
+        fbapi.sendMessage({body: "Boop! ".repeat(people.length), mentions: people}, message.threadID);
+      });
+    }
+    else{
+      var people = [];
+      var ids = [];
+      for (var group of result)
       {
-        for (var person of group['people']){
-          if (!~ids.indexOf(person)){
-            ids.push(person);
-            people.push({tag: "Boop!", id: person, fromIndex: people.length * 6});
+        var name = "@" + group['groupName'];
+        var regex = new RegExp(name + "(\\W|$)");
+        if (regex.test(message.body))
+        {
+          for (var person of group['people']){
+            if (!~ids.indexOf(person)){
+              ids.push(person);
+              people.push({tag: "Boop!", id: person, fromIndex: people.length * 6});
+            }
           }
         }
       }
+      if(people.length != 0)
+        fbapi.sendMessage({body: "Boop! ".repeat(people.length), mentions: people}, message.threadID);
     }
-    if(people.length != 0)
-      fbapi.sendMessage({body: "Boop! ".repeat(people.length), mentions: people}, message.threadID);
   });
 }
 
@@ -123,6 +134,10 @@ function invalidCommand(command, message){
 function makeGroup(words, message){
   if (words[2] == "gmbot"){
     fbapi.sendMessage("hey, that's me!!", message.threadID);
+    return;
+  }
+  if (words[2] == "all"){
+    fbapi.sendMessage("That group already exists!", message.threadID);
     return;
   }
   if (~words.indexOf("@me")){

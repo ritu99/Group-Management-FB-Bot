@@ -25,3 +25,4 @@ To use a command, type @gmbot or /gmbot followed by one of the following command
 | ...@[groupname]... | @Mention a tagging group to ping all of its members |
 
 To tag yourself simply use @me
+To tag the entire group chat use @all
