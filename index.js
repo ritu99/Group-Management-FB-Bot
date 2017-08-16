@@ -92,6 +92,7 @@ function parseCommand(words, message){
 function parseTags(message){
   db.collection("groups").find({threadID: message.threadID}).toArray((err, result) => {
     if(err) throw err;
+    if (!~message.body.indexOf("@")) return;
     if (/@all(\W|$)/.test(message.body)){
       fbapi.getThreadInfo(message.threadID, (err, result) => {
         if(err) throw err;
